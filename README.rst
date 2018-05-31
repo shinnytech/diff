@@ -1,7 +1,10 @@
 Welcome to Differential Information Flow for Finance's documentation!
 =====================================================================
 
-DIFF (Differential Information Flow for Finance) 是一个可扩展的应用层协议. DIFF 协议主要的特性包括:
+DIFF (Differential Information Flow for Finance) 是一个可扩展的应用层协议
+
+
+DIFF 协议主要的特性包括:
 
 * 使用 websocket 协议进行数据传输
 * 使用 json 进行数据封装
@@ -16,11 +19,8 @@ DIFF (Differential Information Flow for Finance) 是一个可扩展的应用层�
 * `天勤衍生品研究终端 <http://www.tq18.cn>`_ : 一套免费的PC行情交易终端, 支持以 DIFF 协议进行扩展开发.
 * `Tianqin Python Sdk <https://github.com/tianqin18/tqsdk-python>`_ : 一套开源的 python 框架, 
   
-  
-.. toctree::
-   :maxdepth: 2
-   :caption: 目录:
-   
-   general.rst
-   funcset/index.rst
-   specs/index.rst
+
+本文档完整内容可在线阅读:
+
+  http://differential-information-flow-for-finance.readthedocs.io/en/latest/
+

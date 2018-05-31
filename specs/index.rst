@@ -1,6 +1,6 @@
 .. _wsapi:
 
-SPECIFICATION
+Specification
 ===================================
 
 .. toctree::
