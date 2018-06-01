@@ -3,10 +3,8 @@
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
 
+   notify.rst
    trade.rst
    quote.rst
    mdhis.rst
-   extension.rst
-   compress.rst

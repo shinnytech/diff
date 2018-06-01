@@ -1,78 +1,341 @@
 ﻿.. _wsapi_general:
 
-交易及账户信息反馈
+交易及银期转账
 ==================================================
-为实现交易功能, 通常需要协议提供这些功能
 
-* 终端登录鉴权 - req_login
-* 终端发出下单指令 - insert_order
-* 终端发出撤单指令 - cancel_order
-* 向终端同步账户信息变动 - rtn_data
-
-
-概念定义和账户结构
+交易账户结构
 --------------------------------------------------
-为避免歧义, 在后续文档中将使用这些特定单词描述:
 
-* USER: 一个独立的用户. 
-* ACCOUNT: 一个USER可以拥有多个ACCOUNT, 
-* POSITION: 一个USER可以拥有多个POSITION
-* ORDER:
-* UNIT: 
-
-
-委托单的单号
+用户(USER)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* 每个委托单都必须有一个单号, 单号可以是不超过128个字节长的任意字符, 数字和点号(.)组合. 
-* 单号由发出下单指令的终端负责设定, 它必须保证, 对于同一个USER, 每个单号都是不重复的.
-* 单号中的点号(.) 作为 unit 分隔符使用 (详见下文 UNIT机制 说明)
+一个用户由一个唯一的 USER_ID 标识. 每个用户的账户信息互相独立. 
+
+在任一时刻, 一个用户的交易账户可以由以下信息完整描述
+
+* 1-N个资金账户(ACCOUNT)
+* 0-N个持仓记录(POSITION)
+* 0-N个委托单(ORDER)
+
+这些信息完整的描述了用户交易账户的[当前状态]. 需要注意的是, 用户过往的交易记录, 转账记录等并不在其中, 那些信息对于用户的交易动作没有任何影响.
 
 
-委托单状态
+资金账户(ACCOUNT)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-任何一个委托单的状态只会是以下两种之一:
+每个资金账户由一个 ACCOUNT_ID 标识. 一个USER可以同时拥有多个ACCOUNT. 每个 ACCOUNT 中的各字段都使用同一币种.
 
+下面是一个ACCOUNT的内容示例:
+
+.. code-block:: javascript
+
+  "CNY": {
+    //核心字段
+    "account_id": "423423",                   //账号
+    "currency": "CNY",                        //币种
+    "balance": 9963216.550000003,             //账户权益
+    "available": 9480176.150000002,           //可用资金
+    //参考字段
+    "pre_balance": 12345,                     //上一交易日结算时的账户权益
+    "deposit": 42344,                         //本交易日内的入金金额
+    "withdraw": 42344,                        //本交易日内的出金金额
+    "commission": 123,                        //本交易日内交纳的手续费
+    "preminum": 123,                          //本交易日内交纳的权利金
+    "static_balance": 124895,                 //静态权益
+    "position_profit": 12345,                 //持仓盈亏
+    "float_profit": 8910.231,                 //浮动盈亏
+    "risk_ratio": 0.048482375,                //风险度
+    "margin": 11232.23,                       //占用资金
+    "frozen_margin": 12345,                   //冻结保证金
+    "frozen_commission": 123,                 //冻结手续费
+    "frozen_premium": 123,                    //冻结权利金
+    "close_profit": 12345,                    //本交易日内平仓盈亏
+    "position_profit": 12345,                 //当前持仓盈亏
+    "position_profit": 12345,                 //当前持仓盈亏
+  }
+
+
+持仓(POSITION)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+每个持仓项描述一个合约的当前持仓情况. 通常以相应的合约代码(SYMBOL)作为KEY
+
+下面是一个 POSITION 的内容示例:
+
+.. code-block:: javascript
+
+  "SHFE.cu1801":{                             //position_key, position_key=symbol
+    //核心字段
+    "exchange_id": "SHFE",                    //交易所
+    "instrument_id": "cu1801",                //合约代码
+    "volume_long": 5,                         //多头持仓手数
+    "volume_short": 5,                        //空头持仓手数
+    "hedge_flag": "SPEC",                     //套保标记
+    //参考字段
+    "open_price_long": 3203.5,                //多头开仓均价
+    "open_price_short": 3100.5,               //空头开仓均价
+    "open_cost_long": 3203.5,                 //多头开仓均价
+    "open_cost_short": 3100.5,                //空头开仓均价
+    "margin": 32324.4,                        //占用保证金
+    "float_profit_long": 32324.4,             //多头浮动盈亏
+    "float_profit_short": 32324.4,            //空头浮动盈亏
+    "volume_long_today": 5,                   //多头持仓手数
+    "volume_long_his": 5,                     //多头持仓手数
+    "volume_long_frozen": 5,                  //多头持仓手数
+    "volume_long_frozen_today": 5,            //多头持仓手数
+    "volume_short_today": 5,                  //多头持仓手数
+    "volume_short_his": 5,                    //多头持仓手数
+    "volume_short_frozen": 5,                 //多头持仓手数
+    "volume_short_frozen_today": 5,           //多头持仓手数
+  }
+
+
+委托单(ORDER)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+委托单的单号:
+
+* 每个委托单都必须有一个单号, 单号可以是不超过128个字节长的任意中英文字符, 数字和点号(.)组合. 
+* 单号由发出下单指令的终端负责设定. 它必须保证, 对于同一个USER, 每个单号都是不重复的.
+* 单号中如果出现了点号(.), 将被视为 unit 分隔符使用 (详见下文 UNIT 说明)
+
+委托单状态: 
+
+* 任何一个委托单的状态只会是这两种之一: FINISHED 或 ALIVE
 * FINISHED: 已经可以确定, 这个委托单以后不会再产生任何新的成交
 * ALIVE: 除上一种情况外的其它任何情况, 委托单状态都标记为 ALIVE, 即这个委托单还有可能产生新的成交
 
+下面是一个 ORDER 的内容示例:
 
-UNIT机制
+.. code-block:: javascript
+
+  "abc|123": {                                //order_key, 用于唯一标识一个委托单, 格式为 session_id|order_id
+    //核心字段
+    "order_type": "TRADE",                    //指令类型
+    "session_id": "abc",                      //会话ID
+    "order_id": "123",                        //委托单ID, 在每个会话中唯一
+    "exchange_id": "SHFE",
+    "instrument_id": "cu1801",
+    "direction": "BUY",                   //下单方向, BUY=
+    "offset": "OPEN",                     //开平标志
+    "volume_orign": 6,                    //总报单手数
+    "volume_left": 3,                     //未成交手数
+    "trade_type": "TAKEPROFIT",           //指令类型
+    "price_type": "LIMIT",                //指令类型
+    "limit_price":	45000,                //委托价格, 仅当 price_type = LIMIT 时有效
+    "time_condition":	"GTD",              //时间条件
+    "volume_condition": "ANY",            //数量条件
+    "min_volume": 0,
+    "hedge_flag": "SPECULATION",          //保值标志
+    "status": "ALIVE",                    //委托单状态, ALIVE=有效, FINISHED=已完
+    //参考字段
+    "last_msg":	"",                       //最后操作信息
+    "force_close":	"NOT",                //强平原因
+    "frozen_money":	15750,                //冻结金额
+    "insert_date_time":	"151754",             //下单时间  
+    "exchange_order_id": "434214",        //交易所单号
+  }
+
+
+交易单元(UNIT)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-例如, 单号为  AA.BB.CC.D 的委托单, 同时属于以下几个unit
+为满足委托单管理的需求, 本协议中定义了交易单元的概念. 每个交易单元拥有自己独立的一组 持仓/委托单/资金盈亏/资金占用 信息. 
+
+交易者在发出委托单时, 可以通过委托单的单号指定委托单所属的交易单元, 由此委托单产生的交易后果, 都会被归属统计到相应的交易单元中.
+
+下面举例说明UNIT的用法:
+  
+终端发出一个下单指令::
+
+  {
+    "aid": "insert_order",          //必填, 下单请求
+    "order_id": "策略1.0001",  //必填, 委托单号, 需确保在一个账号中不重复, 限长512字节
+    "instrument_id": "cu1810",      //必填, 下单合约代码
+    "direction": "BUY",             //必填, 下单买卖方向
+    "offset": "OPEN",               //可选, 下单开平方向, 当指令相关对象不支持开平机制(例如股票)时可不填写此字段
+    "volume": 1,                    //必填, 下单手数
+  }
+
+这个委托单指定了 order_id = "策略1.0001", 其中的 "策略1" 被作为交易单元处理. 当这个委托单成交后, 交易单元 "策略1" 中会记录当前持仓情况::
+
+  "策略1": {
+    "positions": {
+      "SHFE.cu1810":{
+        "volume_long": 1,
+      }
+    },
+  }
+
+如果终端再发出另一个下单指令::
+
+  {
+    "aid": "insert_order",          //必填, 下单请求
+    "order_id": "策略2.0001",  //必填, 委托单号, 需确保在一个账号中不重复, 限长512字节
+    "instrument_id": "cu1810",      //必填, 下单合约代码
+    "direction": "BUY",             //必填, 下单买卖方向
+    "offset": "OPEN",               //可选, 下单开平方向, 当指令相关对象不支持开平机制(例如股票)时可不填写此字段
+    "volume": 1,                    //必填, 下单手数
+  }
+
+成交以后, 交易单元记录情况将变成::
+
+  {
+    "策略1": {
+      "positions": {
+        "SHFE.cu1810":{
+          "volume_long": 1,
+        }
+      },
+    },
+    "策略2": {
+      "positions": {
+        "SHFE.cu1810":{
+          "volume_long": 1,
+        }
+      },
+    }
+  }
+
+更进一步, 交易单元还支持层级结构. 例如, 单号为  AA.BB.CC.D 的委托单, 同时属于以下几个unit
+
 * root unit, unit_id == ""
 * AA
 * AA.BB
 * AA.BB.CC
 
 
+一个 UNIT 的完整内容示例如下:
+
+.. code-block:: javascript
+
+  "A": {
+    "stat": {
+      "close_profit": 342340
+    },
+    "positions": {                        // UNIT 中的持仓情况
+      "SHFE.cu1810":{
+        "unit_id": "A",
+        "symbol": "SHFE.cu1810",
+        "volume_long": 10,
+        "volume_short": 0,
+        "cost_long": 4324230,
+        "cost_short": 0,
+        
+        "order_volume_buy_open": 0,
+        "order_volume_sell_open": 0,
+        "order_volume_buy_close": 0,
+        "order_volume_sell_close": 0,
+      }
+    },
+  }
 
 
-用户内存结构
+交易账户信息同步
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+交易账户信息通过 `rtn_data` 包的 trade 字段进行差分发送, 如下所示:
 
+.. code-block:: javascript
+
+  {
+    "aid": "rtn_data",                                        //数据推送
+    "data": [                                                 //diff数据数组, 一次推送中可能含有多个数据包
+    {
+      "trade": {                                            //交易相关数据
+        "user1": {                                          //登录用户名
+          "user_id": "user1",                               //登录用户名
+          "accounts": {                                     //账户资金信息
+            "CNY": {                                        //account_key, 通常为币种代码
+                                                            //核心字段
+              "account_id": "423423",                       //账号
+              "currency": "CNY",                            //币种
+              "balance": 9963216.550000003,                 //账户权益
+              "available": 9480176.150000002,               //可用资金
+                                                            //参考字段
+              "pre_balance": 12345,                         //上一交易日结算时的账户权益
+              "deposit": 42344,                             //本交易日内的入金金额
+              "withdraw": 42344,                            //本交易日内的出金金额
+              "commission": 123,                            //本交易日内交纳的手续费
+              "preminum": 123,                              //本交易日内交纳的权利金
+              "static_balance": 124895,                     //静态权益
+              "position_profit": 12345,                     //持仓盈亏
+              "float_profit": 8910.231,                     //浮动盈亏
+              "risk_ratio": 0.048482375,                    //风险度
+              "margin": 11232.23,                           //占用资金
+              "frozen_margin": 12345,                       //冻结保证金
+              "frozen_commission": 123,                     //冻结手续费
+              "frozen_premium": 123,                        //冻结权利金
+              "close_profit": 12345,                        //本交易日内平仓盈亏
+              "position_profit": 12345,                     //当前持仓盈亏
+            }
+          },
+          "positions": {                                    //持仓
+            "SHFE.cu1801": {                                //合约代码
+              "exchange_id": "SHFE",                        //交易所
+              "instrument_id": "cu1801",                    //交易所内的合约代码
+              "hedge_flag": "SPEC",                         //套保标记
+              "open_price_long": 3203.5,                    //多头开仓均价
+              "open_price_short": 3100.5,                   //空头开仓均价
+              "open_cost_long": 3203.5,                     //多头开仓市值
+              "open_cost_short": 3100.5,                    //空头开仓市值
+              "margin": 32324.4,                            //占用保证金
+              "float_profit_long": 32324.4,                 //多头浮动盈亏
+              "float_profit_short": 32324.4,                //空头浮动盈亏
+              "volume_long_today": 5,                       //多头今仓手数
+              "volume_long_his": 5,                         //多头老仓手数
+              "volume_long_frozen": 5,                      //多头持仓冻结
+              "volume_long_frozen_today": 5,                //多头今仓冻结
+              "volume_short_today": 5,                      //空头今仓手数
+              "volume_short_his": 5,                        //空头老仓手数
+              "volume_short_frozen": 5,                     //空头持仓冻结
+              "volume_short_frozen_today": 5,               //空头今仓冻结
+            }
+          },
+          "orders": {                                       //委托单
+            "abc|123": {                                    //order_key, 用于唯一标识一个委托单
+              "order_id": "123",                            //委托单ID, 对于一个用户的所有委托单，这个ID都是不重复的
+              "exchange_id": "SHFE",                        //交易所
+              "instrument_id": "cu1801",                    //合约代码
+              "direction": "BUY",                           //下单方向
+              "offset": "OPEN",                             //开平标志
+              "volume_orign": 6,                            //总报单手数
+              "volume_left": 3,                             //未成交手数
+              "price_type": "LIMIT",                        //价格类型
+              "limit_price": 45000,                         //委托价格, 仅当 price_type = LIMIT 时有效
+              "status": "ALIVE",                            //委托单状态, ALIVE=有效, FINISHED=已完
+              "insert_date_time": 1928374000000000,         //下单时间  
+              "exchange_order_id": "434214",                //交易所单号
+            }
+          },
+          "trades": {                                       //成交记录
+            "abc|123|1": {                                  //trade_key, 用于唯一标识一个成交项
+              "order_id": "123",
+              "exchange_id": "SHFE",                        //交易所
+              "instrument_id": "cu1801",                    //交易所内的合约代码
+              "exchange_trade_id": "1243",                  //交易所成交号
+              "direction": "BUY",                           //成交方向
+              "offset": "OPEN",                             //开平标志
+              "volume": 6,                                  //成交手数
+              "price": 1234.5,                              //成交价格
+              "trade_date_time": 1928374000000000           //成交时间
+            }
+          },
+        },
+      },
+      ]
+    }
+  }
 
 
 终端登录鉴权
 --------------------------------------------------
-我们使用 aid = "req_login" 的包作为登录请求包. 此包的结构由具体的实现定义. 以 XXX 项目为例, req_login 包结构如下:
+我们使用 aid = "req_login" 的包作为登录请求包. 此包的结构由具体的实现定义. 以 `Open Trade Gateway <https://github.com/shinnytech/open-trade-gateway>`_ 项目为例, req_login 包结构如下:
 
 .. code-block:: javascript
-   :caption: req_login
    
   {
-    "aid": req_login,        //注册FemasOpen服务器
-    "broker_id": "8000",                //broker_id
-    "trade_servers:[
-        "tcp://201.203.10.22:12345",    //交易服务器地址端口
-        ...
-    ],
-    "query_servers:[
-        "tcp://201.203.10.22",          //查询服务器地址端口
-        ...
-    ],
-    "user_id": "user1",             //登录用户名
-    "password": "abcd",             //登录密码
+    "aid": "req_login",
+    "bid": "aaa",
+    "user_name": "43214",
+    "password": "abcd123",
   }
+
+登录成功或失败的信息, 通过 `notify` 发送
 
 
 交易指令
@@ -109,20 +372,61 @@ UNIT机制
   }
 
 
-信息反馈
+银期转账
+--------------------------------------------------
+签约银行和转账记录
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-终端通过接收 rtn_order 包来更新本地的
+签约银行和转账记录信息由 rtn_data 包中 trade 部分的 banks 和 transfers 发送, 如下所示
 
+.. code-block:: javascript
 
-从主进程接收业务数据
+  {
+    "aid": "rtn_data",                                        //数据推送
+    "data": [                                                 //diff数据数组, 一次推送中可能含有多个数据包
+      {
+        "trade": {                                            //交易相关数据
+          "user1": {                                          //登录用户名
+            "banks": {                                        //用户相关银行
+              "bank1": {
+                "id": "4324",
+                "brch_id": "1234",
+                "name": "工行",
+                "account": "3421321",
+              }
+            },
+            "transfers": {                                    //账户转账记录
+              "0001": {
+                "datetime": "2017/03/01 14:30:00"             //转账时间
+                "trade_type": "BTOF",                         //业务类型
+                "amount": 3243,                               //涉及金额
+                "currency": "CNY",                            //币种
+                "bank_account": "32423",                      //银行账号
+              }
+            },
+          },
+        },
+      ]
+    }
+  }
+
+请求银期转账
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-当从主进程向扩展进程发送数据时, 与其它很多协议不同, 天勤的通讯协议并不会按照 "类别" 或 "请求", 将数据分解为多个包发送.
-相反, 天勤只使用一种包 :ref:`rtn_data`, 来将主程序内存中的全部数据 (实时行情, 历史行情, 交易数据等) 送往扩展进程.
-为减少数据量, 主程序每次发送 :ref:`rtn_data` 时, 通常只包含与前次相比有差异的数据. ( **注意: 协议并不承诺无差异的数据一定不会发送** )
+.. code-block:: javascript
 
-基于这一协议, 我们强烈建议 **扩展进程应设法维护一个完整的业务信息存储区** (在内存,数据库或文件中), 并在每次收到 :ref:`rtn_data` 时更新此存储区中的内容.
-扩展进程中的业务代码, 应从这一存储区中获取业务信息, 而 **不要直接让业务逻辑处理接收到的每个:ref:`rtn_data`包**
+  {
+    "aid": "req_transfer",          //必填, 撤单请求
+    "future_account": "0001",             //必填, 委托单的order_id
+    "future_account_password": "0001",             //必填, 委托单的order_id
+    "bank_id": "0001",             //必填, 委托单的order_id
+    "bank_brch_id": "0001",             //必填, 委托单的order_id
+    "bank_account": "0001",             //必填, 委托单的order_id
+    "bank_password": "0001",             //必填, 委托单的order_id
+    "currency": "0001",             //必填, 委托单的order_id
+    "amount": "0001",             //必填, 委托单的order_id
+  }
 
+转账操作的结果, 将由转账记录同步的方式提供给终端
+  
 
 协议实现
 -----------------------------------
