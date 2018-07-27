@@ -19,10 +19,10 @@ DIFF 协议要求服务端维护一个业务信息截面，例如：
     "risk_ratio": 0.048482375, # 风险度
     "using": 11232.23, # 占用资金
     "position_volume": 12, # 持仓总手数
-    "ins_list": "cu1609,...." # 行情订阅的合约列表
+    "ins_list": "SHFE.cu1609,...." # 行情订阅的合约列表
     "quotes":{ # 所有订阅的实时行情
       "SHFE.cu1612": {
-        "instrument_id": "cu1612",
+        "instrument_id": "SHFE.cu1612",
         "datetime": "2016-12-30 13:21:32.500000",
         "ask_priceN": 36590.0, #卖N价
         "ask_volumeN": 121, #卖N量
