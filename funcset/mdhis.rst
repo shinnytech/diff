@@ -72,8 +72,8 @@
             "data": {
               3384: {
                 "datetime": 1928374000000000,                 //UnixNano 北京时间
-                "trading_day": 1928374000000000,              //交易日的UnixNano 北京时间
                 "last_price": 3432.33,                        //最新价
+                "average": 3420.11,                           //当日均价
                 "highest": 3452.33,                           //最高价
                 "lowest": 3402.33,                            //最低价
                 "bid_price1": 3432.2,                         //买一价
@@ -81,6 +81,7 @@
                 "bid_volume1": 1,                             //买一量
                 "ask_volume1": 2,                             //卖一量
                 "volume": 200,                                //成交量
+                "amount": 120023,                             //成交额
                 "open_interest": 1621,                        //持仓量
               },
               3385: {
