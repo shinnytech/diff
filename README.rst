@@ -10,10 +10,10 @@ DIFF (Differential Information Flow for Finance) 是一个基于websocket和json
 * 支持传输压缩
 * 为移动网络环境特别优化，避免延迟累积效应
 
-`DIFF Collection <https://shinnytech.github.io/>`_ 中列出了一批支持 DIFF 协议的开源软件及开发包
+`DIFF Collection <http://www.shinnytech.com/diff>`_ 中列出了一批支持 DIFF 协议的开源软件及开发包
 
 
 本文档完整内容可在线阅读:
 
-  http://differential-information-flow-for-finance.readthedocs.io/en/latest/
+  http://doc.shinnytech.com/diff/index.html
 
