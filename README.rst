@@ -15,5 +15,5 @@ DIFF (Differential Information Flow for Finance) 是一个基于websocket和json
 
 本文档完整内容可在线阅读:
 
-  http://doc.shinnytech.com/diff/index.html
+  http://doc.shinnytech.com/diff/latest/index.html
 
