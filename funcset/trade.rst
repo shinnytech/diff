@@ -66,7 +66,6 @@
     "exchange_id": "SHFE",                    //交易所
     "instrument_id": "cu1801",                //合约代码
     //参考字段
-    "hedge_flag": "SPEC",                     //套保标记
     "open_price_long": 3203.5,                //多头开仓均价
     "open_price_short": 3100.5,               //空头开仓均价
     "open_cost_long": 3203.5,                 //多头开仓成本
