@@ -150,6 +150,11 @@
     //委托单当前状态
     "status": "ALIVE",                        //委托单状态, ALIVE=有效, FINISHED=已完
     "volume_left": 3,                         //未成交手数
+    "frozen_margin": 343234,                  //冻结保证金
+    "last_msg": "",                           //提示信息
+    
+    //内部序号
+    "seqno": 4324,
   }
 
   
@@ -162,18 +167,18 @@
   "123": {                                    //trade_key, 用于唯一标识一条成交记录. 对于一个USER, trade_key 是永远不重复的
   
     "user_id": "423423",                      //用户ID
+    "order_id": "434214",                     //交易所单号
     "trade_id": "123",                        //委托单ID, 对于一个USER, trade_id 是永远不重复的
     "exchange_id": "SHFE",                    //交易所
     "instrument_id": "cu1801",                //在交易所中的合约代码
-    "order_id": "434214",                     //交易所单号
     "exchange_trade_id": "434214",            //交易所单号
-
     "direction": "BUY",                       //下单方向
     "offset": "OPEN",                         //开平标志
     "volume": 6,                              //成交手数
     "price": 45000,                           //成交价格
     "trade_date_time":	15175442131,          //成交时间, epoch nano
     "commission": "434214",                   //成交手续费
+    "seqno": 4324,
   }
 
 
@@ -390,7 +395,7 @@
     "bank_id": "0001",                                        //必填, 银行ID
     "bank_password": "0001",                                  //必填, 银行账户密码
     "currency": "CNY",                                        //必填, 币种代码
-    "amount": "0001",                                         //必填, 转账金额, >0 表示转入期货账户, <0 表示转出期货账户
+    "amount": 135.4                                           //必填, 转账金额, >0 表示转入期货账户, <0 表示转出期货账户
   }
 
 转账操作的结果, 将由转账记录同步的方式提供给终端
