@@ -35,20 +35,22 @@
     //本交易日开盘前状态
     "pre_balance": 12345,                     //上一交易日结算时的账户权益
     
-    //本交易日内已发生事件的影响
+    //本交易日内出入金事件的影响
     "deposit": 42344,                         //本交易日内的入金金额
     "withdraw": 42344,                        //本交易日内的出金金额
+    "static_balance": 124895,                 //静态权益 = pre_balance + deposit - withdraw
+
+    //本交易日内已完成交易的影响
     "close_profit": 12345,                    //本交易日内的平仓盈亏
     "commission": 123,                        //本交易日内交纳的手续费
     "premium": 123,                           //本交易日内交纳的期权权利金
-    "static_balance": 124895,                 //静态权益 = pre_balance + deposit - withdraw + close_profit - commission - premium
-    
+
     //当前持仓盈亏
     "position_profit": 12345,                 //当前持仓盈亏
     "float_profit": 8910.2,                   //当前浮动盈亏
     
     //当前权益
-    "balance": 9963216.55,                    //账户权益 = static_balance + position_profit
+    "balance": 9963216.55,                    //账户权益 = static_balance + close_profit - commission - premium + position_profit
     
     //保证金占用, 冻结及风险度
     "margin": 11232.23,                       //持仓占用保证金
@@ -114,9 +116,8 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 委托单的单号:
 
-* 每个委托单都必须有一个单号, 单号可以是不超过128个字节长的任意中英文字符, 数字和点号(.)组合. 
+* 每个委托单都必须有一个单号, 单号可以是不超过128个字节长的任意中英文字符和数字组合.
 * 单号由发出下单指令的终端负责设定. 它必须保证, 对于同一个USER, 每个单号都是不重复的.
-* 单号中如果出现了点号(.), 将被视为 unit 分隔符使用 (详见下文 UNIT 说明)
 
 委托单状态: 
 
@@ -477,5 +478,5 @@ HEDGE_POSITION_LIMIT     客户套保超仓
 
 协议实现
 -----------------------------------
-`DIFF Collection <https://shinnytech.github.io/>`_ 中列出了一些本协议的开源实现
+`DIFF Collection <https://www.shinnytech.com/diff>`_ 中列出了一些本协议的开源实现
 
